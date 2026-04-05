@@ -1,0 +1,488 @@
+decay_optimization:
+  id: "decay-optimization-v0.1"
+  title: "Decay Optimization Model v0.1"
+  short_name: "DOM v0.1"
+  version: "0.1.0"
+  status: "draft-core"
+  language: "ja"
+  parent_system: "Immune Royalty OS v0.1"
+  related_models:
+    - "tolerance-zone-v0.1"
+    - "pseudo-structure-detection"
+    - "immune-royalty-os-v0.1"
+
+  purpose:
+    summary: >
+      古い痕跡の暴走、価値集中、既得権の固定化を防ぎつつ、
+      新芽の成長と文明全体の流動性を維持するための減衰最適化モデル。
+    objectives:
+      - "系譜距離に応じた自然減衰を定義する"
+      - "時間経過に伴う優位性の自然低下を扱う"
+      - "新芽圧迫や集中過多に対して加速減衰を発動する"
+      - "誤検出を繰り返す検出器や旧痕跡優位の硬直化を抑制する"
+      - "保護・許容・保留の判定結果に応じて減衰圧を調律する"
+
+  design_principles:
+    - id: "dom-dp-01"
+      name: "decay_is_not_denial"
+      description: "減衰は価値否定ではなく、老化防止と流動性維持のための調整である"
+    - id: "dom-dp-02"
+      name: "multi_axis_decay"
+      description: "減衰は単一軸ではなく、系譜・時間・圧力の複数軸で扱う"
+    - id: "dom-dp-03"
+      name: "pressure_responsive_suppression"
+      description: "新芽圧迫・価値集中・過敏反応には条件付きで加速減衰を適用する"
+    - id: "dom-dp-04"
+      name: "tolerance_aligned_decay"
+      description: "Tolerance Zone の判定結果と連動して減衰強度を調整する"
+    - id: "dom-dp-05"
+      name: "explainable_rebalancing"
+      description: "どの減衰がなぜ発動したのかを常に説明可能にする"
+
+  variables:
+    structural:
+      g:
+        name: "Lineage Distance"
+        range: [0.0, 1000.0]
+        meaning: "系譜距離"
+      age_days:
+        name: "Age in Days"
+        range: [0.0, 100000.0]
+        meaning: "痕跡の経過日数"
+      reuse_rate:
+        name: "Reuse Rate"
+        range: [0.0, 1.0]
+        meaning: "再利用率"
+    pressure:
+      C:
+        name: "Concentration Score"
+        range: [0.0, 1.0]
+        meaning: "価値集中度"
+      N_block:
+        name: "Novelty Blocking Signal"
+        range: [0.0, 1.0]
+        meaning: "旧痕跡が新芽を圧迫している度合い"
+      I:
+        name: "Inflammation Score"
+        range: [0.0, 1.0]
+        meaning: "過敏反応リスク"
+      FP_r:
+        name: "False Positive Repetition"
+        range: [0.0, 1.0]
+        meaning: "誤検出反復度"
+      L_dom:
+        name: "Legacy Dominance"
+        range: [0.0, 1.0]
+        meaning: "旧痕跡優位度"
+    tolerance_context:
+      Z_tol:
+        name: "Tolerance Score"
+        range: [-1.0, 1.0]
+        meaning: "Tolerance Zone の寛容スコア"
+      decision_class:
+        name: "Tolerance Decision Class"
+        range: []
+        meaning: "protect / tolerate / hold / reject-candidate"
+    parameters:
+      lambda_lineage:
+        name: "Lineage Decay Lambda"
+        range: [0.0, 10.0]
+        meaning: "系譜減衰率"
+      lambda_time:
+        name: "Temporal Decay Lambda"
+        range: [0.0, 10.0]
+        meaning: "時間減衰率"
+      pressure_multiplier:
+        name: "Pressure Multiplier"
+        range: [0.0, 10.0]
+        meaning: "圧力応答による加速倍率"
+
+  decay_axes:
+    - id: "lineage_decay"
+      name: "Lineage Decay"
+      role: "系譜距離に応じて影響力を自然に薄める"
+    - id: "temporal_decay"
+      name: "Temporal Decay"
+      role: "時間経過に応じて旧痕跡の優位を下げる"
+    - id: "pressure_responsive_decay"
+      name: "Pressure-Responsive Decay"
+      role: "新芽圧迫・集中過多・炎症時に条件付きで減衰を加速する"
+
+  formulas:
+    lineage_decay:
+      expression: "D_lineage(g) = exp(-lambda_lineage * g)"
+      inputs:
+        - "g"
+        - "lambda_lineage"
+      output: "D_lineage"
+      meaning: "系譜距離が遠いほど影響を減らす"
+
+    temporal_decay:
+      expression: "D_time(age_days) = exp(-lambda_time * age_days_normalized)"
+      expanded_expression: "age_days_normalized = age_days / temporal_half_life_days"
+      inputs:
+        - "age_days"
+        - "lambda_time"
+        - "temporal_half_life_days"
+      output: "D_time"
+      meaning: "古い痕跡の時間的優位を徐々に下げる"
+
+    pressure_score:
+      expression: "P_decay = (0.35 * C) + (0.30 * N_block) + (0.20 * I) + (0.15 * FP_r)"
+      inputs:
+        - "C"
+        - "N_block"
+        - "I"
+        - "FP_r"
+      output: "P_decay"
+      meaning: "加速減衰をかけるべき圧力の総合値"
+
+    pressure_multiplier_formula:
+      expression: "M_pressure = 1 + (pressure_multiplier * P_decay)"
+      inputs:
+        - "pressure_multiplier"
+        - "P_decay"
+      output: "M_pressure"
+      meaning: "圧力に応じて減衰倍率を増加させる"
+
+    pressure_responsive_decay:
+      expression: "D_pressure = exp(-(lambda_lineage * M_pressure) * g)"
+      inputs:
+        - "lambda_lineage"
+        - "M_pressure"
+        - "g"
+      output: "D_pressure"
+      meaning: "系譜減衰を圧力応答で加速する"
+
+    combined_decay:
+      expression: "D_total = w_lineage * D_lineage + w_time * D_time + w_pressure * D_pressure"
+      inputs:
+        - "D_lineage"
+        - "D_time"
+        - "D_pressure"
+        - "w_lineage"
+        - "w_time"
+        - "w_pressure"
+      output: "D_total"
+      meaning: "3軸減衰を重み付きで統合する"
+
+    novelty_rebalancing_penalty:
+      expression: "Penalty_novelty = max(0, N_block - novelty_block_trigger)"
+      inputs:
+        - "N_block"
+        - "novelty_block_trigger"
+      output: "Penalty_novelty"
+      meaning: "新芽圧迫が閾値を超えたぶんだけ再配分圧を生む"
+
+  parameters:
+    core:
+      lambda_lineage: 0.35
+      lambda_time: 0.18
+      pressure_multiplier: 1.80
+      temporal_half_life_days: 180
+
+    weights:
+      w_lineage: 0.40
+      w_time: 0.25
+      w_pressure: 0.35
+
+    triggers:
+      concentration_cap: 0.82
+      novelty_block_trigger: 0.70
+      inflammation_trigger: 0.68
+      false_positive_repetition_trigger: 0.60
+      legacy_dominance_trigger: 0.76
+
+    response_modifiers:
+      protect_decay_bias: 1.15
+      tolerate_decay_bias: 1.00
+      hold_decay_bias: 0.95
+      reject_candidate_decay_bias: 0.85
+
+    safeguards:
+      minimum_decay_floor: 0.05
+      maximum_decay_ceiling: 1.00
+      rebalance_to_novelty_pool_ratio: 0.20
+      detector_sensitivity_reduction: 0.15
+
+  profiles:
+    conservative:
+      description: "既存痕跡保護をやや重視し、減衰を穏やかにする"
+      lambda_lineage: 0.22
+      lambda_time: 0.10
+      pressure_multiplier: 1.20
+      weights:
+        w_lineage: 0.50
+        w_time: 0.30
+        w_pressure: 0.20
+
+    balanced:
+      description: "旧痕跡保護と新芽保護の均衡を取る標準プロファイル"
+      lambda_lineage: 0.35
+      lambda_time: 0.18
+      pressure_multiplier: 1.80
+      weights:
+        w_lineage: 0.40
+        w_time: 0.25
+        w_pressure: 0.35
+
+    novelty_first:
+      description: "新芽保護と硬直化解消を優先し、圧力応答減衰を強める"
+      lambda_lineage: 0.48
+      lambda_time: 0.26
+      pressure_multiplier: 2.30
+      weights:
+        w_lineage: 0.30
+        w_time: 0.20
+        w_pressure: 0.50
+
+  trigger_rules:
+    - id: "dom-tr-01"
+      name: "concentration_trigger"
+      condition: "C >= concentration_cap"
+      action: "apply_concentration_rebalance"
+      meaning: "一部痕跡への集中を抑える"
+
+    - id: "dom-tr-02"
+      name: "novelty_block_trigger"
+      condition: "N_block >= novelty_block_trigger"
+      action: "apply_novelty_relief_decay"
+      meaning: "新芽を塞ぐ旧痕跡へ加速減衰をかける"
+
+    - id: "dom-tr-03"
+      name: "inflammation_trigger"
+      condition: "I >= inflammation_trigger"
+      action: "apply_inflammation_decay_suppression"
+      meaning: "過敏反応時に自動攻撃圧を落とす"
+
+    - id: "dom-tr-04"
+      name: "false_positive_repetition_trigger"
+      condition: "FP_r >= false_positive_repetition_trigger"
+      action: "reduce_detector_sensitivity"
+      meaning: "誤検出を繰り返す検出器を鈍化させる"
+
+    - id: "dom-tr-05"
+      name: "legacy_dominance_trigger"
+      condition: "L_dom >= legacy_dominance_trigger"
+      action: "apply_accelerated_legacy_decay"
+      meaning: "旧痕跡の優位が過剰なとき加速減衰する"
+
+  tolerance_alignment:
+    description: "Tolerance Zone の判定結果に応じて減衰強度を調整する"
+    rules:
+      - decision_class: "protect"
+        decay_bias: 1.15
+        meaning: "保護対象の新芽を塞ぐ旧痕跡への減衰をやや強める"
+
+      - decision_class: "tolerate"
+        decay_bias: 1.00
+        meaning: "標準的な減衰を適用する"
+
+      - decision_class: "hold"
+        decay_bias: 0.95
+        meaning: "判断保留中は減衰圧を少し抑えめにする"
+
+      - decision_class: "reject_candidate"
+        decay_bias: 0.85
+        meaning: "reject 候補に対しては追加保護をかけず、自然減衰寄りに戻す"
+
+    adjusted_decay_formula:
+      expression: "D_adjusted = clamp(D_total * decay_bias, minimum_decay_floor, maximum_decay_ceiling)"
+      inputs:
+        - "D_total"
+        - "decay_bias"
+        - "minimum_decay_floor"
+        - "maximum_decay_ceiling"
+      output: "D_adjusted"
+
+  rebalance_actions:
+    apply_concentration_rebalance:
+      description: "集中しすぎた価値の一部を新芽プールへ還流する"
+      effects:
+        reduce_allocation_weight_by: 0.20
+        redistribute_to_novelty_pool_by: 0.20
+
+    apply_novelty_relief_decay:
+      description: "新芽圧迫が強い旧痕跡に対して加速減衰をかける"
+      effects:
+        use_pressure_responsive_decay: true
+        increase_novelty_pool_priority: true
+
+    apply_inflammation_decay_suppression:
+      description: "炎症状態での自動反応を弱め、説明責任を強める"
+      effects:
+        lower_auto_rejection: true
+        require_explanation: true
+
+    reduce_detector_sensitivity:
+      description: "誤検出を繰り返す検出器の感度を落とす"
+      effects:
+        detector_sensitivity_reduction: 0.15
+
+    apply_accelerated_legacy_decay:
+      description: "過剰な旧痕跡優位を一時的に解消する"
+      effects:
+        legacy_weight_multiplier: 0.70
+        review_after_days: 30
+
+  evaluation_pipeline:
+    - step: 1
+      name: "collect_decay_inputs"
+      action: "read_g_age_pressure_and_tolerance_context"
+
+    - step: 2
+      name: "compute_lineage_decay"
+      action: "calculate_D_lineage"
+
+    - step: 3
+      name: "compute_temporal_decay"
+      action: "calculate_D_time"
+
+    - step: 4
+      name: "compute_pressure_score"
+      action: "calculate_P_decay"
+
+    - step: 5
+      name: "check_pressure_triggers"
+      action: "activate_pressure_responsive_rules_if_needed"
+
+    - step: 6
+      name: "compute_pressure_decay"
+      action: "calculate_D_pressure"
+
+    - step: 7
+      name: "combine_decay_axes"
+      action: "calculate_D_total"
+
+    - step: 8
+      name: "align_with_tolerance_result"
+      action: "apply_decision_class_decay_bias"
+
+    - step: 9
+      name: "clamp_and_emit"
+      action: "output_D_adjusted_and_rebalance_actions"
+
+  recommended_outputs:
+    - "D_lineage"
+    - "D_time"
+    - "P_decay"
+    - "M_pressure"
+    - "D_pressure"
+    - "D_total"
+    - "D_adjusted"
+    - "triggered_decay_rules"
+    - "applied_rebalance_actions"
+    - "human_readable_reason"
+
+  optimization_metrics:
+    primary:
+      - "novelty_survival_rate"
+      - "legacy_concentration_ratio"
+      - "false_positive_rate"
+      - "hold_to_protect_conversion_rate"
+      - "hold_to_reject_conversion_rate"
+    secondary:
+      - "reuse_diversity_score"
+      - "time_to_novelty_visibility"
+      - "legacy_decay_fairness_index"
+      - "rebalance_stability_score"
+
+  example_cases:
+    - id: "dom-case-01"
+      name: "balanced_novelty_pressure"
+      inputs:
+        g: 2
+        age_days: 240
+        C: 0.84
+        N_block: 0.74
+        I: 0.32
+        FP_r: 0.20
+        L_dom: 0.78
+        decision_class: "protect"
+      expectations:
+        triggered_rules:
+          - "concentration_trigger"
+          - "novelty_block_trigger"
+          - "legacy_dominance_trigger"
+        preferred_profile: "balanced"
+        interpretation: "新芽圧迫が強く、旧痕跡優位を抑える方向へ加速減衰"
+
+    - id: "dom-case-02"
+      name: "stable_legacy_without_overreaction"
+      inputs:
+        g: 5
+        age_days: 120
+        C: 0.45
+        N_block: 0.28
+        I: 0.18
+        FP_r: 0.10
+        L_dom: 0.42
+        decision_class: "tolerate"
+      expectations:
+        triggered_rules: []
+        preferred_profile: "conservative"
+        interpretation: "圧力は低く、自然減衰中心で十分"
+
+    - id: "dom-case-03"
+      name: "inflammatory_false_positive_loop"
+      inputs:
+        g: 1
+        age_days: 60
+        C: 0.70
+        N_block: 0.52
+        I: 0.71
+        FP_r: 0.68
+        L_dom: 0.65
+        decision_class: "hold"
+      expectations:
+        triggered_rules:
+          - "inflammation_trigger"
+          - "false_positive_repetition_trigger"
+        preferred_profile: "balanced"
+        interpretation: "炎症と誤検出の反復があり、検出器感度を下げつつ減衰を調律"
+
+  governance:
+    tuning_policy: "human-supervised"
+    review_cycle_days: 30
+    review_metrics:
+      - "novelty_survival_rate"
+      - "legacy_concentration_ratio"
+      - "false_positive_rate"
+      - "rebalance_stability_score"
+    adjustment_targets:
+      - "lambda_lineage"
+      - "lambda_time"
+      - "pressure_multiplier"
+      - "concentration_cap"
+      - "novelty_block_trigger"
+      - "inflammation_trigger"
+      - "false_positive_repetition_trigger"
+      - "legacy_dominance_trigger"
+      - "profile selection"
+    prohibited_behaviors:
+      - "permanent_legacy_dominance_without_decay"
+      - "pressure_responsive_decay_without_explanation"
+      - "using_decay_as_hidden_ban"
+      - "ignoring_tolerance_context"
+      - "novelty_suppression_without_rebalance"
+
+  implementation_notes:
+    - "v0.1 は最初の可動モデルであり、最適化済み完成版ではない"
+    - "まずは 3軸減衰と trigger 連動を明確に切り分ける"
+    - "Tolerance Zone と連動させて減衰強度を調整する"
+    - "誤検出反復時は検出器側にも減衰圧を返す"
+    - "実運用では profile 切替とメトリクス観測を必須にする"
+
+  future_extensions:
+    - id: "dom-ext-01"
+      name: "Adaptive Profile Switching"
+      description: "メトリクスに応じて conservative / balanced / novelty-first を自動切替する"
+    - id: "dom-ext-02"
+      name: "Domain-Specific Decay Curves"
+      description: "分野ごとに半減期と圧力係数を最適化する"
+    - id: "dom-ext-03"
+      name: "Reinforcement-Based Decay Tuning"
+      description: "新芽生存率と偽陽性率に基づいて係数を強化学習的に調整する"
+    - id: "dom-ext-04"
+      name: "Immune Map Binding"
+      description: "Immune Map 可視化レイヤーへ減衰軸を接続する"
