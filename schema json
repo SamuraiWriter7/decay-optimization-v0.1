@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/decay-optimization-v0.1.schema.json",
+  "title": "Decay Optimization Model v0.1 Schema",
+  "description": "JSON Schema for Decay Optimization Model v0.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decay_optimization"],
+  "properties": {
+    "decay_optimization": {
+      "$ref": "#/$defs/DecayOptimization"
+    }
+  },
+  "$defs": {
+    "Range01": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "NonNegativeNumber": {
+      "type": "number",
+      "minimum": 0
+    },
+    "PositiveNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "NumberPair": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "StringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "NamedDescription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "VariableDefRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "range", "meaning"],
+      "properties": {
+        "name": { "type": "string" },
+        "range": { "$ref": "#/$defs/NumberPair" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "VariableDefCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "range", "meaning"],
+      "properties": {
+        "name": { "type": "string" },
+        "range": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "meaning": { "type": "string" }
+      }
+    },
+    "FormulaDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expression", "inputs", "output", "meaning"],
+      "properties": {
+        "expression": { "type": "string" },
+        "expanded_expression": { "type": "string" },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "output": { "type": "string" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "DecayAxis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "role"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" }
+      }
+    },
+    "TriggerRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "condition", "action", "meaning"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "condition": { "type": "string" },
+        "action": { "type": "string" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "AlignmentRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_class", "decay_bias", "meaning"],
+      "properties": {
+        "decision_class": {
+          "type": "string",
+          "enum": ["protect", "tolerate", "hold", "reject_candidate", "reject-candidate"]
+        },
+        "decay_bias": { "$ref": "#/$defs/NonNegativeNumber" },
+        "meaning": { "type": "string" }
+      }
+    },
+    "PrimitiveMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean"]
+      }
+    },
+    "RebalanceAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "effects"],
+      "properties": {
+        "description": { "type": "string" },
+        "effects": { "$ref": "#/$defs/PrimitiveMap" }
+      }
+    },
+    "EvaluationStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "name", "action"],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": { "type": "string" },
+        "action": { "type": "string" }
+      }
+    },
+    "ProfileDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "lambda_lineage", "lambda_time", "pressure_multiplier", "weights"],
+      "properties": {
+        "description": { "type": "string" },
+        "lambda_lineage": { "$ref": "#/$defs/NonNegativeNumber" },
+        "lambda_time": { "$ref": "#/$defs/NonNegativeNumber" },
+        "pressure_multiplier": { "$ref": "#/$defs/NonNegativeNumber" },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["w_lineage", "w_time", "w_pressure"],
+          "properties": {
+            "w_lineage": { "$ref": "#/$defs/Range01" },
+            "w_time": { "$ref": "#/$defs/Range01" },
+            "w_pressure": { "$ref": "#/$defs/Range01" }
+          }
+        }
+      }
+    },
+    "ExampleCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "inputs", "expectations"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["g", "age_days", "C", "N_block", "I", "FP_r", "L_dom", "decision_class"],
+          "properties": {
+            "g": { "$ref": "#/$defs/NonNegativeNumber" },
+            "age_days": { "$ref": "#/$defs/NonNegativeNumber" },
+            "C": { "$ref": "#/$defs/Range01" },
+            "N_block": { "$ref": "#/$defs/Range01" },
+            "I": { "$ref": "#/$defs/Range01" },
+            "FP_r": { "$ref": "#/$defs/Range01" },
+            "L_dom": { "$ref": "#/$defs/Range01" },
+            "decision_class": {
+              "type": "string",
+              "enum": ["protect", "tolerate", "hold", "reject_candidate", "reject-candidate"]
+            }
+          }
+        },
+        "expectations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["triggered_rules", "preferred_profile", "interpretation"],
+          "properties": {
+            "triggered_rules": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "preferred_profile": {
+              "type": "string",
+              "enum": ["conservative", "balanced", "novelty_first", "novelty-first"]
+            },
+            "interpretation": { "type": "string" }
+          }
+        }
+      }
+    },
+    "FutureExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "DecayOptimization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "short_name",
+        "version",
+        "status",
+        "language",
+        "parent_system",
+        "related_models",
+        "purpose",
+        "design_principles",
+        "variables",
+        "decay_axes",
+        "formulas",
+        "parameters",
+        "profiles",
+        "trigger_rules",
+        "tolerance_alignment",
+        "rebalance_actions",
+        "evaluation_pipeline",
+        "recommended_outputs",
+        "optimization_metrics",
+        "example_cases",
+        "governance",
+        "implementation_notes",
+        "future_extensions"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "const": "decay-optimization-v0.1"
+        },
+        "title": {
+          "type": "string",
+          "const": "Decay Optimization Model v0.1"
+        },
+        "short_name": {
+          "type": "string",
+          "const": "DOM v0.1"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^0\\.1\\.0$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft-core"]
+        },
+        "language": {
+          "type": "string",
+          "enum": ["ja", "en"]
+        },
+        "parent_system": {
+          "type": "string"
+        },
+        "related_models": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "purpose": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "objectives"],
+          "properties": {
+            "summary": { "type": "string" },
+            "objectives": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            }
+          }
+        },
+        "design_principles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NamedDescription" },
+          "minItems": 1
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["structural", "pressure", "tolerance_context", "parameters"],
+          "properties": {
+            "structural": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["g", "age_days", "reuse_rate"],
+              "properties": {
+                "g": { "$ref": "#/$defs/VariableDefRange" },
+                "age_days": { "$ref": "#/$defs/VariableDefRange" },
+                "reuse_rate": { "$ref": "#/$defs/VariableDefRange" }
+              }
+            },
+            "pressure": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["C", "N_block", "I", "FP_r", "L_dom"],
+              "properties": {
+                "C": { "$ref": "#/$defs/VariableDefRange" },
+                "N_block": { "$ref": "#/$defs/VariableDefRange" },
+                "I": { "$ref": "#/$defs/VariableDefRange" },
+                "FP_r": { "$ref": "#/$defs/VariableDefRange" },
+                "L_dom": { "$ref": "#/$defs/VariableDefRange" }
+              }
+            },
+            "tolerance_context": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["Z_tol", "decision_class"],
+              "properties": {
+                "Z_tol": { "$ref": "#/$defs/VariableDefRange" },
+                "decision_class": { "$ref": "#/$defs/VariableDefCategory" }
+              }
+            },
+            "parameters": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["lambda_lineage", "lambda_time", "pressure_multiplier"],
+              "properties": {
+                "lambda_lineage": { "$ref": "#/$defs/VariableDefRange" },
+                "lambda_time": { "$ref": "#/$defs/VariableDefRange" },
+                "pressure_multiplier": { "$ref": "#/$defs/VariableDefRange" }
+              }
+            }
+          }
+        },
+        "decay_axes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DecayAxis" },
+          "minItems": 1
+        },
+        "formulas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lineage_decay",
+            "temporal_decay",
+            "pressure_score",
+            "pressure_multiplier_formula",
+            "pressure_responsive_decay",
+            "combined_decay",
+            "novelty_rebalancing_penalty"
+          ],
+          "properties": {
+            "lineage_decay": { "$ref": "#/$defs/FormulaDef" },
+            "temporal_decay": { "$ref": "#/$defs/FormulaDef" },
+            "pressure_score": { "$ref": "#/$defs/FormulaDef" },
+            "pressure_multiplier_formula": { "$ref": "#/$defs/FormulaDef" },
+            "pressure_responsive_decay": { "$ref": "#/$defs/FormulaDef" },
+            "combined_decay": { "$ref": "#/$defs/FormulaDef" },
+            "novelty_rebalancing_penalty": { "$ref": "#/$defs/FormulaDef" }
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["core", "weights", "triggers", "response_modifiers", "safeguards"],
+          "properties": {
+            "core": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["lambda_lineage", "lambda_time", "pressure_multiplier", "temporal_half_life_days"],
+              "properties": {
+                "lambda_lineage": { "$ref": "#/$defs/NonNegativeNumber" },
+                "lambda_time": { "$ref": "#/$defs/NonNegativeNumber" },
+                "pressure_multiplier": { "$ref": "#/$defs/NonNegativeNumber" },
+                "temporal_half_life_days": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["w_lineage", "w_time", "w_pressure"],
+              "properties": {
+                "w_lineage": { "$ref": "#/$defs/Range01" },
+                "w_time": { "$ref": "#/$defs/Range01" },
+                "w_pressure": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "triggers": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "concentration_cap",
+                "novelty_block_trigger",
+                "inflammation_trigger",
+                "false_positive_repetition_trigger",
+                "legacy_dominance_trigger"
+              ],
+              "properties": {
+                "concentration_cap": { "$ref": "#/$defs/Range01" },
+                "novelty_block_trigger": { "$ref": "#/$defs/Range01" },
+                "inflammation_trigger": { "$ref": "#/$defs/Range01" },
+                "false_positive_repetition_trigger": { "$ref": "#/$defs/Range01" },
+                "legacy_dominance_trigger": { "$ref": "#/$defs/Range01" }
+              }
+            },
+            "response_modifiers": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "protect_decay_bias",
+                "tolerate_decay_bias",
+                "hold_decay_bias",
+                "reject_candidate_decay_bias"
+              ],
+              "properties": {
+                "protect_decay_bias": { "$ref": "#/$defs/NonNegativeNumber" },
+                "tolerate_decay_bias": { "$ref": "#/$defs/NonNegativeNumber" },
+                "hold_decay_bias": { "$ref": "#/$defs/NonNegativeNumber" },
+                "reject_candidate_decay_bias": { "$ref": "#/$defs/NonNegativeNumber" }
+              }
+            },
+            "safeguards": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "minimum_decay_floor",
+                "maximum_decay_ceiling",
+                "rebalance_to_novelty_pool_ratio",
+                "detector_sensitivity_reduction"
+              ],
+              "properties": {
+                "minimum_decay_floor": { "$ref": "#/$defs/Range01" },
+                "maximum_decay_ceiling": { "$ref": "#/$defs/Range01" },
+                "rebalance_to_novelty_pool_ratio": { "$ref": "#/$defs/Range01" },
+                "detector_sensitivity_reduction": { "$ref": "#/$defs/Range01" }
+              }
+            }
+          }
+        },
+        "profiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["conservative", "balanced", "novelty_first"],
+          "properties": {
+            "conservative": { "$ref": "#/$defs/ProfileDef" },
+            "balanced": { "$ref": "#/$defs/ProfileDef" },
+            "novelty_first": { "$ref": "#/$defs/ProfileDef" }
+          }
+        },
+        "trigger_rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TriggerRule" },
+          "minItems": 1
+        },
+        "tolerance_alignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["description", "rules", "adjusted_decay_formula"],
+          "properties": {
+            "description": { "type": "string" },
+            "rules": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AlignmentRule" },
+              "minItems": 1
+            },
+            "adjusted_decay_formula": { "$ref": "#/$defs/FormulaDef" }
+          }
+        },
+        "rebalance_actions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "apply_concentration_rebalance",
+            "apply_novelty_relief_decay",
+            "apply_inflammation_decay_suppression",
+            "reduce_detector_sensitivity",
+            "apply_accelerated_legacy_decay"
+          ],
+          "properties": {
+            "apply_concentration_rebalance": { "$ref": "#/$defs/RebalanceAction" },
+            "apply_novelty_relief_decay": { "$ref": "#/$defs/RebalanceAction" },
+            "apply_inflammation_decay_suppression": { "$ref": "#/$defs/RebalanceAction" },
+            "reduce_detector_sensitivity": { "$ref": "#/$defs/RebalanceAction" },
+            "apply_accelerated_legacy_decay": { "$ref": "#/$defs/RebalanceAction" }
+          }
+        },
+        "evaluation_pipeline": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EvaluationStep" },
+          "minItems": 1
+        },
+        "recommended_outputs": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "optimization_metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["primary", "secondary"],
+          "properties": {
+            "primary": { "$ref": "#/$defs/StringArray" },
+            "secondary": { "$ref": "#/$defs/StringArray" }
+          }
+        },
+        "example_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ExampleCase" },
+          "minItems": 1
+        },
+        "governance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tuning_policy",
+            "review_cycle_days",
+            "review_metrics",
+            "adjustment_targets",
+            "prohibited_behaviors"
+          ],
+          "properties": {
+            "tuning_policy": { "type": "string" },
+            "review_cycle_days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "review_metrics": { "$ref": "#/$defs/StringArray" },
+            "adjustment_targets": { "$ref": "#/$defs/StringArray" },
+            "prohibited_behaviors": { "$ref": "#/$defs/StringArray" }
+          }
+        },
+        "implementation_notes": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "future_extensions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FutureExtension" }
+        }
+      }
+    }
+  }
+}
